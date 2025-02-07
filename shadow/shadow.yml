@@ -1,0 +1,95 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: chip-shadow
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+        - cluster: https://kubernetes.default.svc                                       
+  template:
+    metadata:
+      name: chip-shadow
+    spec:
+      project: "chip"
+      source:
+        repoURL: 'http://chartmuseum.chartmuseum.svc.cluster.local:8080'
+        chart: sample
+        targetRevision: 0.1.0
+        helm:
+          releaseName: chip-shadow
+          valuesObject:
+            app:
+              name: chip
+              image: fidelissauro/chip:v1
+              namespace: shadow
+              iam: ""
+              version: v8
+              capacity:
+                requests: 
+                  cpu: 100m
+                  memory: 128Mi
+                limits: 
+                  cpu: 200m
+                  memory: 256Mi
+                autoscaling: {}
+                min: 1
+                max: 1
+              rollout:
+                strategy:
+                  canary:
+                    steps:                   
+                    - setWeight: 100
+              envs:
+                # - name: VERSION
+                #   value: "v2"
+
+              port:
+                name: http-web
+                port: 8080
+                protocol: TCP
+                targetPort: 8080
+              service:
+                type: ClusterIP
+              istio:
+                gateway: 
+                  selector: ingressgateway
+                  # HTTP, HTTP2, GRPC, GRPC-WEB, MONGO, REDIS, MYSQL, TCP
+                  protocol: HTTP 
+                  port: 80
+                host: chip-shadow.homelab.msfidelis.com.br
+                virtualService:
+                  http:
+                    enabled: true
+                    retries:
+                      attempts: 1
+                      perTryTimeout: 500ms
+                      retryOn: refused-stream
+
+              prometheus:
+                scrape: "true"
+                port: 8080
+                path: /metrics
+
+              probes:
+                livenessProbe:
+                  enabled: true
+                  failureThreshold: 10
+                  periodSeconds: 10
+                  httpGet:
+                    path: /healthcheck
+                    port: 8080
+                startupProbe:
+                  enabled: true
+                  failureThreshold: 10
+                  periodSeconds: 10
+                  httpGet:
+                    path: /healthcheck
+                    port: 8080
+
+      destination:
+        server: '{{ cluster }}'
+        namespace: argocd
+      syncPolicy:
+        automated: {}

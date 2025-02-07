@@ -1,0 +1,117 @@
+apiVersion: argoproj.io/v1alpha1
+kind: ApplicationSet
+metadata:
+  name: chip
+  namespace: argocd
+spec:
+  generators:
+    - list:
+        elements:
+        - cluster: https://kubernetes.default.svc                                       
+  template:
+    metadata:
+      name: chip
+    spec:
+      project: "chip"
+      source:
+        repoURL: 'http://chartmuseum.chartmuseum.svc.cluster.local:8080'
+        chart: sample
+        targetRevision: 0.1.0
+        helm:
+          releaseName: chip
+          valuesObject:
+            app:
+              name: chip
+              image: fidelissauro/chip:v1
+              namespace: chip
+              iam: ""
+              version: v8
+              capacity:
+                requests: 
+                  cpu: 100m
+                  memory: 128Mi
+                limits: 
+                  cpu: 200m
+                  memory: 256Mi
+                autoscaling: {}
+                min: 10
+                max: 10
+              rollout:
+                strategy:
+                  canary:
+                    steps:
+                    - setWeight: 0
+                    - pause: { }
+                    - setWeight: 20
+                    - pause: { }
+                    - setWeight: 40
+                    - pause: { }
+                    - setWeight: 80
+                    - pause: { }                     
+                    - setWeight: 100
+              envs:
+                # - name: VERSION
+                #   value: "v2"
+
+              port:
+                name: http-web
+                port: 8080
+                protocol: TCP
+                targetPort: 8080
+              service:
+                type: ClusterIP
+              istio:
+                gateway: 
+                  selector: ingressgateway
+                  # HTTP, HTTP2, GRPC, GRPC-WEB, MONGO, REDIS, MYSQL, TCP
+                  protocol: HTTP 
+                  port: 80
+                host: chip.homelab.msfidelis.com.br
+                virtualService:
+                  http:
+                    enabled: true
+                    retries:
+                      attempts: 1
+                      perTryTimeout: 500ms
+                      retryOn: refused-stream
+                  mirror:
+                    enabled: true
+                    host: chip.shadow.svc.cluster.local
+                    port: "8080"
+                    percent: 5
+                destinationRule:
+                  enabled: true
+                  host: chip.chip.svc.cluster.local
+                  connectionPool: 
+                    enabled: true
+                    tcp:
+                      enabled: true
+                  outlierDetection: 
+                    enabled: true
+
+              prometheus:
+                scrape: "true"
+                port: 8080
+                path: /metrics
+
+              probes:
+                livenessProbe:
+                  enabled: true
+                  failureThreshold: 10
+                  periodSeconds: 10
+                  httpGet:
+                    path: /healthcheck
+                    port: 8080
+                startupProbe:
+                  enabled: true
+                  failureThreshold: 10
+                  periodSeconds: 10
+                  httpGet:
+                    path: /healthcheck
+                    port: 8080
+
+      destination:
+        server: '{{ cluster }}'
+        namespace: argocd
+      syncPolicy:
+        automated: {}
