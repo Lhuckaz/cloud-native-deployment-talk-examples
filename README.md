@@ -141,3 +141,12 @@ After completing these steps, Argo CD should automatically sync the `chip` appli
 ```bash
 argocd app get chip --grpc-web --refresh
 ```
+
+
+Add https://github.com/argoproj-labs/rollout-extension
+
+Add
+curl -sLO https://github.com/argoproj/argo-rollouts/releases/latest/download/kubectl-argo-rollouts-$(uname -s)-amd64
+
+chmod +x ./kubectl-argo-rollouts-$(uname -s)-amd64
+sudo mv ./kubectl-argo-rollouts-$(uname -s)-amd64 /usr/local/bin/kubectl-argo-rollouts
