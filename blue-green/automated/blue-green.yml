@@ -24,7 +24,7 @@ spec:
               name: chip
               image: fidelissauro/chip:v1
               namespace: chip
-              version: "v3"
+              version: "v4"
               iam: ""
               capacity:
                 requests: 
@@ -45,7 +45,7 @@ spec:
 
               envs:
                 - name: VERSION
-                  value: "v3"
+                  value: "v4"
 
               port:
                 name: http-web

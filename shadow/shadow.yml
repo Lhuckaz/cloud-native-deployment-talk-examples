@@ -14,9 +14,9 @@ spec:
     spec:
       project: "chip"
       source:
-        repoURL: 'http://chartmuseum.chartmuseum.svc.cluster.local:8080'
-        chart: sample
-        targetRevision: 0.1.0
+        repoURL: 'https://github.com/Lhuckaz/cloud-native-deployment-talk-examples'
+        path: helm/sample
+        targetRevision: HEAD
         helm:
           releaseName: chip-shadow
           valuesObject:
