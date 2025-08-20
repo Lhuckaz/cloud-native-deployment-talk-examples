@@ -1,7 +1,3 @@
-# Exemplos usados na demonstração da talk
-
-[Slides](https://docs.google.com/presentation/d/18bHT_kW2bx_kLBFqpBLuqzlVUUoI9RXreCrnmqKm2Fk/edit?usp=sharing)
-
 ## Deployment Steps for Docker Desktop Kubernetes with Argo CD
 
 This section outlines the steps to deploy the applications in this repository to a Docker Desktop Kubernetes cluster using Argo CD.
